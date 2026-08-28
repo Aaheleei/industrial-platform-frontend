@@ -48,7 +48,9 @@ class TrustPriorStore:
         """Load store from disk, or initialize empty."""
         if self.store_path.exists():
             with open(self.store_path, "r") as f:
-                return json.load(f)
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
         return {}
 
     def _save(self):

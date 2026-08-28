@@ -82,12 +82,27 @@ def get_missingness_rate(signal: np.ndarray) -> float:
     return float(np.isnan(signal).sum() / len(signal))
 
 
-def compute_in_range_fraction(signal: np.ndarray, valid_range: Tuple[float, float]) -> float:
-    """Fraction of non-NaN values that fall within valid range."""
+def compute_in_range_fraction(signal: np.ndarray, valid_range) -> float:
+    """Fraction of non-NaN values that fall within valid range.
+
+    Args:
+        signal: 1D array (may contain NaN)
+        valid_range: Either tuple (min, max) or dict with 'min'/'max' keys
+
+    Returns:
+        Fraction in range [0, 1]
+    """
     valid = signal[~np.isnan(signal)]
     if len(valid) == 0:
         return 0.0
-    in_range = np.sum((valid >= valid_range[0]) & (valid <= valid_range[1]))
+
+    # Handle both tuple and dict formats
+    if isinstance(valid_range, dict):
+        min_val, max_val = valid_range["min"], valid_range["max"]
+    else:
+        min_val, max_val = valid_range[0], valid_range[1]
+
+    in_range = np.sum((valid >= min_val) & (valid <= max_val))
     return float(in_range / len(valid))
 
 

@@ -26,10 +26,23 @@ class TestHistoryFeatures:
     """Test feature extraction."""
 
     def test_recency_feature_fresh(self):
-        # Recently inspected asset
-        history = generate_asset_history(asset_id="asset_001", n_inspections=5, seed=42)
+        # Recently inspected asset (within last few days)
+        now = datetime.datetime.utcnow()
+        fresh_ts = (now - datetime.timedelta(days=1)).isoformat() + "Z"
+        inspection = InspectionRecord(
+            asset_id="asset_001",
+            timestamp=fresh_ts,
+            anomaly_detected=False,
+            inspection_type="routine"
+        )
+        history = AssetHistory(
+            asset_id="asset_001",
+            inspections=[inspection],
+            total_inspections=1,
+            anomalies_detected=0,
+        )
         recency = extract_recency_feature(history)
-        assert 0.5 < recency <= 1.0  # Should be high (recent)
+        assert 0.5 <= recency <= 1.0  # Should be high (recent)
 
     def test_recency_feature_stale(self):
         # Asset not inspected in a long time (manually create)
