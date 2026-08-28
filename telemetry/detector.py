@@ -36,12 +36,13 @@ class TelemetryDetector:
     Simple and interpretable.
     """
 
-    def __init__(self, z_threshold: float = 2.5):
+    def __init__(self, z_threshold: float = 1.0):
         """
         Initialize detector.
 
         Args:
-            z_threshold: Z-score threshold above which a channel is flagged anomalous
+            z_threshold: Z-score threshold above which a channel is flagged anomalous.
+                        Lower threshold = more sensitive to anomalies (default 1.0 instead of 2.5)
         """
         self.z_threshold = z_threshold
         self.normal_stats = {}  # Will be fitted from data if needed
@@ -93,8 +94,8 @@ class TelemetryDetector:
         avg_z = np.mean(list(z_scores.values())) if z_scores else 0.0
 
         # Convert to probability [0, 1]
-        # Sigmoid-like: prob = 1 / (1 + exp(-5 * (avg_z - threshold)))
-        raw_score = 5.0 * (avg_z - self.z_threshold)
+        # Use lower threshold for sensitivity. Sigmoid with steepness=3
+        raw_score = 3.0 * (avg_z - self.z_threshold)
         anomaly_prob = 1.0 / (1.0 + np.exp(-raw_score))
         anomaly_prob = float(np.clip(anomaly_prob, 0.0, 1.0))
 

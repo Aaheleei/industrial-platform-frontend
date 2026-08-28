@@ -22,8 +22,9 @@ from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 
 from telemetry.generator import generate_sample, generate_batch
 from history.generator import generate_asset_history, generate_asset_histories
-from vision.detector import VisionDetector
-from telemetry.detector import TelemetryDetector
+from vision.generator import generate_vision_image
+from vision.learned_detector import LearnedVisionDetector
+from telemetry.learned_detector import LearnedTelemetryDetector
 from history.detector import HistoryDetector
 from trust.gate import TrustGate, GateInputs
 from fusion.fusion import FusionEngine
@@ -39,8 +40,8 @@ class AblationStudy:
 
     def __init__(self, config_path: str = "configs/config.yaml"):
         self.config = load_config(config_path)
-        self.vision_detector = VisionDetector(device="cpu")
-        self.telemetry_detector = TelemetryDetector()
+        self.vision_detector = LearnedVisionDetector()  # Changed from VisionDetector
+        self.telemetry_detector = LearnedTelemetryDetector()  # Changed from TelemetryDetector
         self.history_detector = HistoryDetector()
         self.fusion_engine = FusionEngine()
         self.trust_gate = TrustGate(
@@ -64,8 +65,52 @@ class AblationStudy:
         np.random.seed(seed)
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-        # Generate test set
-        logger.info(f"Generating {n_test_samples} test samples...")
+        # Generate training set for history detector
+        logger.info("Generating training set for history detector...")
+        n_train_assets = 50
+        train_histories = {}
+        train_labels = []
+        for i in range(n_train_assets):
+            asset_id = f"train_asset_{i:03d}"
+            label = 1 if i < n_train_assets // 2 else 0
+            train_histories[asset_id] = generate_asset_history(asset_id=asset_id, seed=seed + i)
+            train_labels.append(label)
+
+        # Fit history detector
+        self.history_detector.fit(train_histories, np.array(train_labels), self.config)
+
+        # Generate training set for vision detector
+        logger.info("Generating training set for vision detector...")
+        n_train_images = 100
+        train_images = []
+        train_vision_labels = []
+        for i in range(n_train_images):
+            condition = "anomalous" if i < n_train_images // 2 else "normal"
+            label = 1 if condition == "anomalous" else 0
+            image = generate_vision_image(condition=condition, seed=seed + i + 1000)
+            train_images.append(image)
+            train_vision_labels.append(label)
+
+        # Fit vision detector
+        self.vision_detector.fit(train_images, np.array(train_vision_labels))
+
+        # Generate training set for telemetry detector
+        logger.info("Generating training set for telemetry detector...")
+        n_train_telemetry = 100
+        train_telemetry = []
+        train_telemetry_labels = []
+        for i in range(n_train_telemetry):
+            condition = "anomalous" if i < n_train_telemetry // 2 else "normal"
+            label = 1 if condition == "anomalous" else 0
+            sample = generate_sample(condition=condition, seed=seed + i + 2000)
+            train_telemetry.append((sample.channels, sample.timestamps))
+            train_telemetry_labels.append(label)
+
+        # Fit telemetry detector
+        self.telemetry_detector.fit(train_telemetry, np.array(train_telemetry_labels), self.config)
+
+        # Generate test set with completely separate seed (no overlap with train)
+        logger.info(f"Generating {n_test_samples} test samples (seed offset +10000)...")
         n_anomalous = n_test_samples // 2
 
         test_data = []
@@ -75,9 +120,10 @@ class AblationStudy:
             condition = "anomalous" if i < n_anomalous else "normal"
             label = 1 if condition == "anomalous" else 0
 
-            image = np.random.rand(480, 640, 3)
-            telemetry_sample = generate_sample(condition=condition, seed=seed + i)
-            history = generate_asset_history(asset_id=f"asset_{i:03d}", seed=seed + i)
+            # TEST set uses seed + 10000 (guaranteed no overlap)
+            image = generate_vision_image(condition=condition, seed=seed + i + 10000)
+            telemetry_sample = generate_sample(condition=condition, seed=seed + i + 10000)
+            history = generate_asset_history(asset_id=f"test_asset_{i:03d}", seed=seed + i + 10000)
 
             test_data.append({
                 "image": image,
@@ -89,9 +135,9 @@ class AblationStudy:
 
         test_labels = np.array(test_labels)
 
-        # Fit calibration on synthetic validation set
+        # Fit calibration on synthetic validation set (seed: base + 3000)
         logger.info("Fitting calibration scaler...")
-        self._fit_calibration(seed=seed + 1000)
+        self._fit_calibration(seed=seed + 3000)
 
         # Run all 8 variants
         results = []
