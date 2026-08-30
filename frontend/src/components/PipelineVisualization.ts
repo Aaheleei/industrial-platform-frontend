@@ -7,13 +7,13 @@ import type { BackendResponse } from '../types';
 
 export function PipelineVisualization() {
   return `
-    <section class="pipeline-section">
+    <section class="pipeline-section" role="region" aria-label="Inference pipeline visualization">
       <div class="pipeline-container">
         <h2>Inference Pipeline</h2>
 
-        <div class="pipeline-diagram">
+        <div class="pipeline-diagram" role="presentation" aria-label="Six-stage anomaly detection pipeline">
           <!-- Stage 1: Inputs -->
-          <div class="pipeline-stage" id="stage-1" data-stage="1">
+          <div class="pipeline-stage" id="stage-1" data-stage="1" role="region" aria-label="Stage 1: Inputs">
             <div class="stage-node">
               <div class="stage-label">Inputs</div>
               <div class="stage-icon">📥</div>
@@ -21,20 +21,20 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Telemetry:</span>
-                <span class="detail-value" id="input-telemetry">—</span>
+                <span class="detail-value" id="input-telemetry" aria-live="polite">—</span>
               </div>
             </div>
           </div>
 
           <!-- Connector 1→2 -->
-          <div class="pipeline-connector" id="connector-1-2">
+          <div class="pipeline-connector" id="connector-1-2" role="presentation" aria-hidden="true">
             <svg width="40" height="60" viewBox="0 0 40 60">
               <path d="M 20 0 Q 20 30, 20 60" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="4,4" />
             </svg>
           </div>
 
           <!-- Stage 2: Quality -->
-          <div class="pipeline-stage" id="stage-2" data-stage="2">
+          <div class="pipeline-stage" id="stage-2" data-stage="2" role="region" aria-label="Stage 2: Quality estimation">
             <div class="stage-node">
               <div class="stage-label">Quality</div>
               <div class="stage-icon">✓</div>
@@ -42,7 +42,7 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Quality:</span>
-                <span class="detail-value" id="quality-score">—</span>
+                <span class="detail-value" id="quality-score" aria-live="polite">—</span>
               </div>
               <div class="detail-info">
                 <small>Independent from prediction confidence</small>
@@ -51,14 +51,14 @@ export function PipelineVisualization() {
           </div>
 
           <!-- Connector 2→3 -->
-          <div class="pipeline-connector" id="connector-2-3">
+          <div class="pipeline-connector" id="connector-2-3" role="presentation" aria-hidden="true">
             <svg width="40" height="60" viewBox="0 0 40 60">
               <path d="M 20 0 Q 20 30, 20 60" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="4,4" />
             </svg>
           </div>
 
           <!-- Stage 3: Trust -->
-          <div class="pipeline-stage" id="stage-3" data-stage="3">
+          <div class="pipeline-stage" id="stage-3" data-stage="3" role="region" aria-label="Stage 3: Trust gating">
             <div class="stage-node">
               <div class="stage-label">Trust</div>
               <div class="stage-icon">🔒</div>
@@ -66,20 +66,20 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Gate Value:</span>
-                <span class="detail-value" id="trust-gate">—</span>
+                <span class="detail-value" id="trust-gate" aria-live="polite">—</span>
               </div>
             </div>
           </div>
 
           <!-- Connector 3→4 -->
-          <div class="pipeline-connector" id="connector-3-4">
+          <div class="pipeline-connector" id="connector-3-4" role="presentation" aria-hidden="true">
             <svg width="40" height="60" viewBox="0 0 40 60">
               <path d="M 20 0 Q 20 30, 20 60" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="4,4" />
             </svg>
           </div>
 
           <!-- Stage 4: Fusion -->
-          <div class="pipeline-stage" id="stage-4" data-stage="4">
+          <div class="pipeline-stage" id="stage-4" data-stage="4" role="region" aria-label="Stage 4: Multimodal fusion">
             <div class="stage-node">
               <div class="stage-label">Fusion</div>
               <div class="stage-icon">⚡</div>
@@ -87,20 +87,20 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Fused Score:</span>
-                <span class="detail-value" id="fused-score">—</span>
+                <span class="detail-value" id="fused-score" aria-live="polite">—</span>
               </div>
             </div>
           </div>
 
           <!-- Connector 4→5 -->
-          <div class="pipeline-connector" id="connector-4-5">
+          <div class="pipeline-connector" id="connector-4-5" role="presentation" aria-hidden="true">
             <svg width="40" height="60" viewBox="0 0 40 60">
               <path d="M 20 0 Q 20 30, 20 60" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="4,4" />
             </svg>
           </div>
 
           <!-- Stage 5: Calibration -->
-          <div class="pipeline-stage" id="stage-5" data-stage="5">
+          <div class="pipeline-stage" id="stage-5" data-stage="5" role="region" aria-label="Stage 5: Confidence calibration">
             <div class="stage-node">
               <div class="stage-label">Calibration</div>
               <div class="stage-icon">📊</div>
@@ -108,20 +108,20 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Raw → Calibrated:</span>
-                <span class="detail-value" id="calibration-values">— → —</span>
+                <span class="detail-value" id="calibration-values" aria-live="polite">— → —</span>
               </div>
             </div>
           </div>
 
           <!-- Connector 5→6 -->
-          <div class="pipeline-connector" id="connector-5-6">
+          <div class="pipeline-connector" id="connector-5-6" role="presentation" aria-hidden="true">
             <svg width="40" height="60" viewBox="0 0 40 60">
               <path d="M 20 0 Q 20 30, 20 60" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="4,4" />
             </svg>
           </div>
 
           <!-- Stage 6: Decision -->
-          <div class="pipeline-stage" id="stage-6" data-stage="6">
+          <div class="pipeline-stage" id="stage-6" data-stage="6" role="region" aria-label="Stage 6: Anomaly decision">
             <div class="stage-node decision-node">
               <div class="stage-label">Decision</div>
               <div class="stage-icon">🎯</div>
@@ -129,11 +129,11 @@ export function PipelineVisualization() {
             <div class="stage-details">
               <div class="detail-row">
                 <span class="detail-label">Prediction:</span>
-                <span class="detail-value" id="final-prediction">—</span>
+                <span class="detail-value" id="final-prediction" aria-live="polite">—</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">Confidence:</span>
-                <span class="detail-value" id="final-confidence">—</span>
+                <span class="detail-value" id="final-confidence" aria-live="polite">—</span>
               </div>
             </div>
           </div>

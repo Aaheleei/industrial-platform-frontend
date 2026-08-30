@@ -99,12 +99,60 @@ async function handleRunInference() {
     updateExplanation(response);
   } catch (error) {
     console.error('Error during inference:', error);
-    const errorMsg =
-      error instanceof Error ? error.message : 'Unknown error occurred';
-    alert(`Failed to run inference: ${errorMsg}\n\nMake sure the backend is running on port 8000.`);
+    displayErrorBanner(error);
   } finally {
     setRunButtonLoading(false);
   }
+}
+
+/**
+ * Display user-friendly error message
+ */
+function displayErrorBanner(error: unknown) {
+  const errorContainer = document.querySelector('.main-content') as HTMLElement;
+  if (!errorContainer) return;
+
+  // Remove any existing error banner
+  const existingBanner = errorContainer.querySelector('.error-banner');
+  if (existingBanner) existingBanner.remove();
+
+  let title = 'Inference Failed';
+  let message = 'An unknown error occurred.';
+
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    title = 'Backend Connection Failed';
+    message =
+      'Cannot reach the backend API at http://localhost:8000.\n\n' +
+      'Solution: Make sure the backend is running.\n' +
+      'Run: python backend/main.py';
+  } else if (error instanceof Error) {
+    if (error.message.includes('400')) {
+      title = 'Invalid Input';
+      message = 'The sensor value is invalid. Please enter a number.';
+    } else if (error.message.includes('500')) {
+      title = 'Server Error';
+      message =
+        'The backend encountered an error.\n' +
+        'Check the backend console for details.';
+    } else {
+      message = error.message;
+    }
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'error-banner';
+  banner.innerHTML = `
+    <strong>⚠️ ${title}</strong>
+    <div>${message}</div>
+  `;
+
+  errorContainer.insertBefore(banner, errorContainer.firstChild);
+
+  // Auto-dismiss after 6 seconds
+  setTimeout(() => {
+    banner.style.animation = 'slideUp 0.3s ease-out forwards';
+    setTimeout(() => banner.remove(), 300);
+  }, 6000);
 }
 
 /**

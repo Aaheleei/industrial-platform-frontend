@@ -5,17 +5,23 @@
 
 export function InputPanel() {
   return `
-    <section class="input-panel">
+    <section class="input-panel" role="region" aria-label="Inference input controls">
       <div class="panel-content">
         <h2>Inference Input</h2>
 
         <div class="input-group">
           <label for="assetId">Asset</label>
-          <select id="assetId" class="input-field">
+          <select
+            id="assetId"
+            class="input-field"
+            aria-label="Select industrial asset for analysis"
+            aria-describedby="asset-help"
+          >
             <option value="motor-07">Motor-07</option>
             <option value="motor-08">Motor-08</option>
             <option value="motor-09">Motor-09</option>
           </select>
+          <small id="asset-help" style="opacity: 0.7; font-size: 12px;">Choose the equipment to analyze</small>
         </div>
 
         <div class="modality-section">
@@ -29,11 +35,20 @@ export function InputPanel() {
               placeholder="Enter sensor value..."
               step="0.1"
               value="42.5"
+              aria-label="Telemetry sensor value in degrees Celsius"
+              aria-describedby="sensor-help"
+              aria-required="true"
             />
+            <small id="sensor-help" style="opacity: 0.7; font-size: 12px;">Enter a numeric value (example: 42.5)</small>
           </div>
         </div>
 
-        <button id="runInferenceBtn" class="btn btn-primary">
+        <button
+          id="runInferenceBtn"
+          class="btn btn-primary"
+          aria-label="Run anomaly detection inference"
+          aria-busy="false"
+        >
           Run Inference
         </button>
       </div>
