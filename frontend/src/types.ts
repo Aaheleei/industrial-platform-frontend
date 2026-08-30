@@ -12,6 +12,40 @@ export interface BackendResponse {
   quality_estimation: number;
   rag_recommendation: string;
   status: string;
+
+  // Multimodal inference results (stages 3-5)
+  trust_gate?: number;
+  fusion?: {
+    raw_score: number;
+    fused_score: number;
+    disagreement: number;
+  };
+  calibration?: {
+    raw_probability: number;
+    calibrated_probability: number;
+    temperature: number;
+    ece: number;
+  };
+  modalities?: {
+    vision: {
+      prediction: number;
+      quality: number;
+      prior_trust: number;
+      weight: number;
+    };
+    telemetry: {
+      prediction: number;
+      quality: number;
+      prior_trust: number;
+      weight: number;
+    };
+    history: {
+      prediction: number;
+      quality: number;
+      prior_trust: number;
+      weight: number;
+    };
+  };
 }
 
 /**

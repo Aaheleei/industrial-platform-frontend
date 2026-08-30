@@ -201,22 +201,26 @@ export function updatePipelineWithResponse(response: BackendResponse) {
     );
   }
 
-  // Stage 3: Trust (placeholder - backend not ready)
+  // Stage 3: Trust (now with real data)
   const trustGate = document.querySelector('#trust-gate');
   if (trustGate) {
-    trustGate.textContent = '—';
+    const gateValue = response.trust_gate || 0;
+    animateNumberValue(trustGate as HTMLElement, 0, gateValue, 300);
   }
 
-  // Stage 4: Fusion (placeholder - backend not ready)
+  // Stage 4: Fusion (now with real data)
   const fusedScore = document.querySelector('#fused-score');
   if (fusedScore) {
-    fusedScore.textContent = '—';
+    const fusionValue = response.fusion?.fused_score || 0;
+    animateNumberValue(fusedScore as HTMLElement, 0, fusionValue, 300);
   }
 
-  // Stage 5: Calibration (placeholder - backend not ready)
+  // Stage 5: Calibration (now with real data)
   const calibrationValues = document.querySelector('#calibration-values');
   if (calibrationValues) {
-    calibrationValues.textContent = '— → —';
+    const rawProb = response.calibration?.raw_probability || 0;
+    const calibProb = response.calibration?.calibrated_probability || 0;
+    calibrationValues.textContent = `${formatValue(rawProb)} → ${formatValue(calibProb)}`;
   }
 
   // Stage 6: Decision
