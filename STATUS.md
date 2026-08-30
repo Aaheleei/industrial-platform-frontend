@@ -1,5 +1,194 @@
 # Project Status Summary
 
+## 📐 System Architecture (Frontend → Backend → ML Core)
+
+### Layer 1: Frontend (React/TypeScript)
+- **Location:** `frontend/` directory
+- **Running on:** http://localhost:5173
+- **User inputs:**
+  - Sensor value (float)
+  - Image file (industrial photo)
+  - Asset ID (e.g., "motor_07")
+- **Display:**
+  - Final prediction (NORMAL / ANOMALY)
+  - Calibrated confidence percentage
+  - Per-modality predictions
+  - Trust weights visualization
+  - Quality scores breakdown
+  - Dominant evidence explanation
+
+**Frontend → Backend:** HTTP POST to `/predict` with JSON body + multipart form data
+
+### Layer 2: Backend (FastAPI)
+- **Location:** `backend/main.py`
+- **Running on:** http://localhost:8000
+- **Responsibilities:**
+  1. Parse HTTP request (sensor value, image, asset_id)
+  2. Convert image to numpy array
+  3. Call ML core: `result = run_inference(image, telemetry_value, asset_id)`
+  4. Log result to PostgreSQL database
+  5. Return InferenceResult JSON to frontend
+
+**Backend → ML Core:** Direct Python function call (same process)
+
+### Layer 3: ML Core (Python/PyTorch Research Engine)
+- **Location:** `ml_core/` directory
+- **Entry point:** `ml_core.pipeline.inference.run_inference()`
+- **8-step pipeline:**
+  1. **Vision Detection** → anomaly_score ∈ [0,1]
+  2. **Telemetry Detection** → anomaly_score ∈ [0,1]
+  3. **History Detection** → anomaly_score ∈ [0,1]
+  4. **Quality Estimation** → q_vision, q_telemetry, q_history ∈ [0,1]
+  5. **Trust Gating** → w_vision, w_telemetry, w_history (sum=1)
+  6. **Fusion** → z_fused = Σ(w_i × z_i)
+  7. **Calibration** → calibrated_probability via temperature scaling
+  8. **Output Formatting** → InferenceResult JSON
+
+---
+
+## How Data Flows Through the System
+
+### Example: Motor-07 Vibration Check
+
+**User Action:**
+```
+Enters: sensor_value=42.5, uploads image, selects "motor_07"
+Clicks: "Run Prediction"
+```
+
+**Frontend:**
+```
+POST http://localhost:8000/predict
+  sensor_value: 42.5
+  image: <binary image data>
+  asset_id: "motor_07"
+```
+
+**Backend receives:**
+```python
+@app.post("/predict")
+async def predict(sensor_value: float, image_file: UploadFile, asset_id: str):
+    image_array = np.array(Image.open(image_file))
+    
+    # Call ML Core
+    result = run_inference(
+        image=image_array,
+        telemetry_value=42.5,
+        asset_id="motor_07"
+    )
+    
+    # Log to DB
+    db_log(sensor_value, result)
+    
+    # Return to frontend
+    return result
+```
+
+**ML Core Processes:**
+
+```
+VISION:
+  - Image quality analysis: blur=0.94, exposure=0.88, sharpness=0.93
+  - Quality score: q_vision = 0.91 ✓ (high quality image)
+  - Model prediction: p_vision = 0.91 (high anomaly likelihood)
+  - Prior trust: p_prior_vision = 0.85 (historically trustworthy)
+  
+TELEMETRY:
+  - Signal quality: noise detected (SNR = 12 dB)
+  - Quality score: q_telemetry = 0.52 ✗ (moderate degradation)
+  - Model prediction: p_telemetry = 0.63 (moderate anomaly)
+  - Prior trust: p_prior_telemetry = 0.70
+  
+HISTORY:
+  - Records: complete inspection history, recent maintenance
+  - Quality score: q_history = 0.94 ✓✓ (excellent data)
+  - Model prediction: p_history = 0.82 (likely anomalous)
+  - Prior trust: p_prior_history = 0.90
+
+TRUST GATES:
+  g_vision = 0.91 × 0.85 = 0.77
+  g_telemetry = 0.52 × 0.70 = 0.36  ← Reduced due to noise
+  g_history = 0.94 × 0.90 = 0.85
+  
+  Sum of gates = 1.98
+  
+WEIGHTS (normalized):
+  w_vision = 0.77 / 1.98 = 0.39
+  w_telemetry = 0.36 / 1.98 = 0.18  ← Lower weight (system detected quality issue)
+  w_history = 0.85 / 1.98 = 0.43
+  
+FUSION:
+  z_fused = 0.39×0.91 + 0.18×0.63 + 0.43×0.82
+          = 0.35 + 0.11 + 0.35
+          = 0.81 (fused anomaly score)
+  
+  Disagreement: max(z_i) - min(z_i) = 0.91 - 0.63 = 0.28
+
+CALIBRATION:
+  Raw probability: 0.81
+  Temperature T = 1.1 (learned from validation set)
+  Calibrated probability: 0.78
+  
+  ECE = 0.03 (confidence well-calibrated)
+
+OUTPUT:
+{
+  "asset_id": "motor_07",
+  "prediction": {
+    "label": "anomaly",
+    "raw_probability": 0.81,
+    "calibrated_probability": 0.78
+  },
+  "modalities": [
+    {
+      "name": "vision",
+      "prediction": 0.91,
+      "quality": 0.91,
+      "prior": 0.85,
+      "weight": 0.39
+    },
+    {
+      "name": "telemetry",
+      "prediction": 0.63,
+      "quality": 0.52,
+      "prior": 0.70,
+      "weight": 0.18
+    },
+    {
+      "name": "history",
+      "prediction": 0.82,
+      "quality": 0.94,
+      "prior": 0.90,
+      "weight": 0.43
+    }
+  ],
+  "uncertainty": {
+    "cross_modal_disagreement": 0.28
+  },
+  "explanations": {
+    "dominant_modality": "history",
+    "reason": "highest reliability-weighted evidence (0.43 weight with excellent quality)"
+  }
+}
+```
+
+**Frontend displays:**
+```
+✓ ANOMALY DETECTED (78% confidence)
+  
+  Evidence breakdown:
+  ├─ Vision: 39% weight (91% anomaly, high quality 0.91)
+  ├─ Telemetry: 18% weight (63% anomaly, DEGRADED quality 0.52)
+  └─ History: 43% weight (82% anomaly, excellent quality 0.94)
+  
+  Key insight: Telemetry received lower weight due to detected noise
+               History (most reliable) dominated the decision
+  
+  Recommendation: Check maintenance history first
+```
+
+---
+
 ## ✅ Completed Phases
 
 | Phase | Task | Status | Notes |

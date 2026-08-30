@@ -1,4 +1,212 @@
-# Trust-Calibrated Multimodal Industrial Anomaly Intelligence — ML Core
+# Trust-Calibrated Multimodal Industrial Anomaly Intelligence Platform
+
+**A two-person research prototype demonstrating intelligent evidence fusion with dynamic trust calibration.**
+
+---
+
+## System Overview: End-to-End Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND (React + TypeScript) @ http://localhost:5173                       │
+│                                                                              │
+│ User Interface:                                                              │
+│  ├─ Input sensor value (e.g., 42.5 degrees)                                │
+│  ├─ Upload industrial image                                                 │
+│  ├─ Select asset ID (e.g., "motor_07")                                     │
+│  └─ Click "Run Prediction"                                                  │
+│                                                                              │
+│ Result Display:                                                              │
+│  ├─ Final prediction (NORMAL / ANOMALY)                                     │
+│  ├─ Calibrated confidence (0-100%)                                          │
+│  ├─ Per-modality scores (Vision / Telemetry / History)                      │
+│  ├─ Trust weights (how much each modality influenced decision)              │
+│  ├─ Quality indicators (why that weight)                                    │
+│  └─ Explanation (which evidence dominated and why)                          │
+│                                                                              │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                    HTTP POST /predict with:
+                    - sensor_value: 42.5
+                    - image_file: <binary>
+                    - asset_id: "motor_07"
+                    │
+                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND (FastAPI) @ http://localhost:8000                                   │
+│                                                                              │
+│ Routes:                                                                      │
+│  POST /predict                                                               │
+│    1. Parse incoming request (sensor value, image, asset)                   │
+│    2. Call ML core: result = run_inference(...)                             │
+│    3. Log result to PostgreSQL database                                     │
+│    4. Return comprehensive JSON response                                    │
+│                                                                              │
+│ Integration:                                                                 │
+│  from ml_core.pipeline.inference import run_inference                       │
+│                                                                              │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                    Python function call to ML core:
+                    │
+                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ML CORE (Python/PyTorch) — Your Research Engine                             │
+│                                                                              │
+│ STEP 1: VISION MODALITY                                                     │
+│ ├─ Preprocess: normalize, resize to (224, 224)                              │
+│ ├─ Model: Transfer learning on MVTec AD                                     │
+│ ├─ Output: vision_score = 0.91 (anomaly likelihood)                         │
+│ └─ Quality: blur=0.94, exposure=0.88, sharpness=0.93 → q=0.91              │
+│                                                                              │
+│ STEP 2: TELEMETRY MODALITY                                                  │
+│ ├─ Preprocess: rolling window, z-score normalize                            │
+│ ├─ Model: LSTM or statistical anomaly detector                              │
+│ ├─ Output: telemetry_score = 0.63                                           │
+│ └─ Quality: noise=0.52, drift=0.52, missingness=0.52 → q=0.52              │
+│                                                                              │
+│ STEP 3: HISTORY MODALITY                                                    │
+│ ├─ Extract features: recency, frequency, consistency, etc.                  │
+│ ├─ Model: Bayesian prior or logistic regression                             │
+│ ├─ Output: history_score = 0.82                                             │
+│ └─ Quality: recency=0.97, coverage=0.91, consistency=0.95 → q=0.94         │
+│                                                                              │
+│ STEP 4: TRUST GATING ⭐ (Core Research Component)                           │
+│ ├─ Load persistent priors: p_vision=0.85, p_telemetry=0.70, p_history=0.90 │
+│ ├─ Gate formula: g_i = q_i × p_i                                            │
+│ │  g_vision = 0.91 × 0.85 = 0.77                                           │
+│ │  g_telemetry = 0.52 × 0.70 = 0.36                                        │
+│ │  g_history = 0.94 × 0.90 = 0.85                                          │
+│ ├─ Normalize: w_i = g_i / Σ(g_j) + ε                                        │
+│ │  w_vision = 0.77 / 1.98 = 0.39                                           │
+│ │  w_telemetry = 0.36 / 1.98 = 0.18  ← Lower due to poor quality!          │
+│ │  w_history = 0.85 / 1.98 = 0.43                                          │
+│ └─ Key: If telemetry had noise, its quality drops → weight automatically drops
+│                                                                              │
+│ STEP 5: EVIDENCE FUSION ⭐ (Research Component)                             │
+│ ├─ Formula: z_fused = Σ(w_i × z_i)                                          │
+│ ├─ = 0.39×0.91 + 0.18×0.63 + 0.43×0.82                                      │
+│ ├─ = 0.35 + 0.11 + 0.35 = 0.81 (fused anomaly likelihood)                   │
+│ └─ Detects disagreement: max(z_i) - min(z_i) = 0.91 - 0.63 = 0.28          │
+│                                                                              │
+│ STEP 6: CALIBRATION ⭐ (Research Component)                                 │
+│ ├─ Raw probability: 0.81                                                     │
+│ ├─ Apply temperature scaling: T=1.1 learned from validation set              │
+│ ├─ Calibrated probability: 0.78                                              │
+│ └─ Measures: ECE, Brier score (confidence matches actual accuracy)          │
+│                                                                              │
+│ STEP 7: UNCERTAINTY QUANTIFICATION                                          │
+│ ├─ Cross-modal disagreement: 0.28 (how much modalities disagree)            │
+│ ├─ Confidence intervals from calibration metrics                            │
+│ └─ Uncertainty propagation: higher when modalities disagree                 │
+│                                                                              │
+│ STEP 8: EXPLANATIONS & METADATA                                             │
+│ ├─ Dominant modality: "history" (highest weight 0.43)                       │
+│ ├─ Reason: "highest quality evidence (0.94) with strong prior (0.90)"       │
+│ ├─ Evidence trail: which modalities contributed most                        │
+│ └─ Action recommendations (from domain expert rules)                        │
+│                                                                              │
+│ OUTPUT: Comprehensive InferenceResult JSON                                  │
+│ {                                                                            │
+│   "asset_id": "motor_07",                                                   │
+│   "prediction": {                                                            │
+│     "label": "anomaly",                                                      │
+│     "raw_probability": 0.81,                                                 │
+│     "calibrated_probability": 0.78                                           │
+│   },                                                                         │
+│   "modalities": [                                                            │
+│     {                                                                        │
+│       "name": "vision",                                                      │
+│       "prediction": 0.91,                                                    │
+│       "quality": 0.91,                                                       │
+│       "prior": 0.85,                                                         │
+│       "weight": 0.39                                                         │
+│     },                                                                       │
+│     {                                                                        │
+│       "name": "telemetry",                                                   │
+│       "prediction": 0.63,                                                    │
+│       "quality": 0.52,                                                       │
+│       "prior": 0.70,                                                         │
+│       "weight": 0.18                                                         │
+│     },                                                                       │
+│     {                                                                        │
+│       "name": "history",                                                     │
+│       "prediction": 0.82,                                                    │
+│       "quality": 0.94,                                                       │
+│       "prior": 0.90,                                                         │
+│       "weight": 0.43                                                         │
+│     }                                                                        │
+│   ],                                                                         │
+│   "uncertainty": {                                                           │
+│     "cross_modal_disagreement": 0.28,                                        │
+│     "calibration_confidence": 0.78                                           │
+│   },                                                                         │
+│   "explanations": {                                                          │
+│     "dominant_modality": "history",                                          │
+│     "reason": "highest combined quality×prior confidence"                    │
+│   }                                                                          │
+│ }                                                                            │
+│                                                                              │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                    Return JSON to backend
+                                   │
+                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND: Log & Respond                                                      │
+│                                                                              │
+│ 1. Log to PostgreSQL: prediction_logs table                                 │
+│ 2. Return JSON response to frontend                                         │
+│                                                                              │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                    HTTP 200 with result JSON
+                                   │
+                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND: Display Results                                                   │
+│                                                                              │
+│ ✓ Prediction: ANOMALY DETECTED (78% confidence)                             │
+│ ✓ Vision contributed 39% of the decision                                    │
+│ ✓ Telemetry only 18% (low quality detection: noise present)                 │
+│ ✓ History dominated at 43% (best quality: complete records)                 │
+│ ✓ Disagreement flag: Modalities not in full agreement                       │
+│ ✓ Action: Review maintenance records (dominant evidence)                    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key Innovation: Dynamic Trust Gating
+
+**Traditional Approach (Fixed Averaging):**
+```
+Prediction = (vision + telemetry + history) / 3
+→ Equal weight regardless of data quality
+→ Noisy telemetry pulls prediction down equally
+```
+
+**Your Approach (Trust-Gated Fusion):**
+```
+Quality scores: q_vision=0.91, q_telemetry=0.32, q_history=0.94
+Priors: p_vision=0.85, p_telemetry=0.70, p_history=0.90
+
+Gates: g_i = q_i × p_i
+→ g_vision = 0.91×0.85 = 0.77
+→ g_telemetry = 0.32×0.70 = 0.22  ← Automatically reduced!
+→ g_history = 0.94×0.90 = 0.85
+
+Weights: w_i = g_i / Σ(g_j)
+→ w_vision = 42%
+→ w_telemetry = 12%  ← System detected noise, reduced weight
+→ w_history = 46%
+
+Result: Noisy modality automatically receives less influence
+        No hard-coded rules. Purely data-driven.
+```
+
+---
 
 ## 1. Research Problem & Hypothesis
 
