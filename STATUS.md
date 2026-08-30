@@ -191,21 +191,30 @@ OUTPUT:
 
 ## ✅ Completed Phases
 
+### ML Core (Person 1)
+
 | Phase | Task | Status | Notes |
 |-------|------|--------|-------|
-| 1 | Repo skeleton + config + schemas + generators | ✅ Complete | Tested: config loads, generators produce valid samples, schemas validate |
-| 2 | Vision detector (ResNet18 fine-tuned) | ✅ Complete | VisionDetector class, preprocessing (blur/exposure/illumination), localization stub |
-| 3 | Telemetry detector (z-score ensemble) | ✅ Complete | Per-channel z-score, quality factors (missingness, noise, drift, staleness) |
-| 4 | History detector (logistic regression) | ✅ Complete | 5 features extracted (recency, count, coverage, consistency, anomaly_freq) |
-| 5 | Quality estimation (all 3 modalities) | ✅ Complete | Invariant verified: quality independent of model confidence |
-| 6 | Trust gating + worked example | ✅ Complete | Section 8 table reproduced (±0.02 tolerance), unit test passes |
-| 7 | Fusion + 5 edge cases | ✅ Complete | All modalities present, one missing, one degraded, contradictory, multiple degraded |
-| 8 | Calibration (temperature scaling) | ✅ Complete | TemperatureScaler (fit/transform), ECE/Brier metrics, reliability diagram |
-| 9 | Human feedback + persistent priors | ✅ Complete | TrustPriorStore (JSON), EMA updates, safeguards, rollback, acceptance check |
-| 10 | Degradation experiments (4×4 grid) | ✅ Complete | Dropout levels × modes, 5 trials each, both baseline+proposed, CSV/JSON output |
-| 11 | Ablation study (8 variants) | ✅ Complete | A–H variants on same eval set, AUROC/F1/ECE/Brier reported |
-| 12 | Master pipeline (run_inference) | ✅ Complete | 10 steps wired, all detectors/quality/gate/fusion/calib integrated |
-| 13 | Tests + README | ✅ Complete | Unit + integration tests, comprehensive README with math/experiments/limitations |
+| ML-1 | Repo skeleton + config + schemas + generators | ✅ Complete | Tested: config loads, generators produce valid samples, schemas validate |
+| ML-2 | Vision detector (ResNet18 fine-tuned) | ✅ Complete | VisionDetector class, preprocessing (blur/exposure/illumination), localization stub |
+| ML-3 | Telemetry detector (z-score ensemble) | ✅ Complete | Per-channel z-score, quality factors (missingness, noise, drift, staleness) |
+| ML-4 | History detector (logistic regression) | ✅ Complete | 5 features extracted (recency, count, coverage, consistency, anomaly_freq) |
+| ML-5 | Quality estimation (all 3 modalities) | ✅ Complete | Invariant verified: quality independent of model confidence |
+| ML-6 | Trust gating + worked example | ✅ Complete | Section 8 table reproduced (±0.02 tolerance), unit test passes |
+| ML-7 | Fusion + 5 edge cases | ✅ Complete | All modalities present, one missing, one degraded, contradictory, multiple degraded |
+| ML-8 | Calibration (temperature scaling) | ✅ Complete | TemperatureScaler (fit/transform), ECE/Brier metrics, reliability diagram |
+| ML-9 | Human feedback + persistent priors | ✅ Complete | TrustPriorStore (JSON), EMA updates, safeguards, rollback, acceptance check |
+| ML-10 | Degradation experiments (4×4 grid) | ✅ Complete | Dropout levels × modes, 5 trials each, both baseline+proposed, CSV/JSON output |
+| ML-11 | Ablation study (8 variants) | ✅ Complete | A–H variants on same eval set, AUROC/F1/ECE/Brier reported |
+| ML-12 | Master pipeline (run_inference) | ✅ Complete | 10 steps wired, all detectors/quality/gate/fusion/calib integrated |
+| ML-13 | Tests + README | ✅ Complete | Unit + integration tests, comprehensive README with math/experiments/limitations |
+
+### Frontend (Person 2)
+
+| Phase | Task | Status | Notes |
+|-------|------|--------|-------|
+| FE-1 | Component architecture + types + styling | ✅ Complete | 6 modular components, TypeScript interfaces, 450+ lines CSS, responsive layout |
+| FE-2 | API integration + pipeline animation | ✅ Complete | Vite dev server running, E2E tests (7/7 pass), 6-stage sequential animation with number tweens |
 
 ## 📊 Code Structure
 
