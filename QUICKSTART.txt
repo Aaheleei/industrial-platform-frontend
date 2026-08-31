@@ -1,0 +1,239 @@
+================================================================================
+
+   TRUST-CALIBRATED MULTIMODAL INDUSTRIAL ANOMALY INTELLIGENCE PLATFORM
+
+                         QUICK START GUIDE
+
+================================================================================
+
+PROJECT STATUS: ✅ READY TO BUILD
+
+================================================================================
+
+🚀 IMMEDIATE NEXT STEPS (This Week)
+
+Person 1 (ML/Research Engineer):
+  1. Read: memory/START-HERE.md (10 min)
+  2. Read: memory/SYSTEM-COMPLETE-GUIDE.md (45 min)
+  3. Read: plans/ml-core-implementation.md (20 min)
+  4. Create: ml_core/ directory structure
+  5. Start: Phase 1 (generators + config)
+
+Person 2 (Application Developer):
+  1. Read: memory/START-HERE.md (10 min)
+  2. Read: memory/SYSTEM-COMPLETE-GUIDE.md integration checklist
+  3. Start: backend/main.py modifications
+  4. Test: Backend can call run_inference()
+
+================================================================================
+
+📚 DOCUMENTATION (All in .claude-omniroute/projects/.../memory/)
+
+START-HERE.md                     ← Read this first (10 min)
+SYSTEM-COMPLETE-GUIDE.md          ← Full architecture + examples (45 min)
+ml-core-quick-ref.md              ← Component specs + validation (20 min)
+system-architecture-complete.md   ← Detailed flow diagram
+frontend-backend-flow.md          ← How data moves through layers
+MEMORY.md                         ← Index of all docs
+
+Also in repo:
+  README.md                       ← Research hypothesis + math
+  STATUS.md                       ← Project progress
+  plans/ml-core-implementation.md ← 13-phase timeline
+
+================================================================================
+
+✨ WHAT YOU HAVE RIGHT NOW
+
+✅ Frontend    Running at http://localhost:5173
+✅ Backend     Ready at http://localhost:8000
+✅ Architecture Complete & Documented
+✅ 7 Scenarios Defined
+✅ Development Timeline Ready
+✅ Return Schema Finalized
+✅ All Formulas Written
+
+================================================================================
+
+🎯 THE RESEARCH HYPOTHESIS
+
+When multiple industrial modalities (vision, telemetry, history) provide
+evidence of an anomaly, the system should:
+
+  1. Estimate the QUALITY of each modality's evidence
+  2. DYNAMICALLY adjust trust based on quality
+  3. FUSE evidence using trust weights (not fixed averaging)
+  4. Produce CALIBRATED confidence (honest about reliability)
+  5. LEARN from human feedback via trust prior updates
+
+Result: System degrades gracefully when modalities fail.
+
+================================================================================
+
+📊 HOW THE SYSTEM WORKS (30-Second Overview)
+
+Frontend (React):
+  User inputs: sensor_value, image, asset_id
+  ↓
+Backend (FastAPI):
+  Receives HTTP POST /predict
+  Calls: result = run_inference(image, sensor_value, asset_id)
+  ↓
+ML Core (PyTorch) - 8 Step Pipeline:
+  1. Vision detector     → 0.91 (anomaly score)
+  2. Telemetry detector → 0.63
+  3. History detector   → 0.82
+  4. Quality estimation → q_vision=0.91, q_telemetry=0.52, q_history=0.94
+  5. Trust gating       → w_vision=39%, w_telemetry=18%, w_history=43%
+     (Formula: w_i = (q_i × p_i) / Σ(q_j × p_j))
+  6. Fusion             → z_fused = 0.39×0.91 + 0.18×0.63 + 0.43×0.82 = 0.81
+  7. Calibration        → calibrated_confidence = 0.78
+  8. Return JSON        → Complete InferenceResult
+  ↓
+Backend:
+  Logs result to database
+  Returns JSON to frontend
+  ↓
+Frontend:
+  Displays: ANOMALY DETECTED (78% confidence)
+  Shows: Per-modality contributions
+  Shows: Quality scores + explanations
+
+KEY INSIGHT:
+  Telemetry had LOWER quality (0.52 vs 0.91/0.94)
+  → Its weight AUTOMATICALLY reduced (18% vs ~33% if equal)
+  → System detected degradation without rules
+  → Purely data-driven adaptation
+
+================================================================================
+
+🔨 PERSON 1: ML/Research Engineer (19 Days)
+
+Phase 1 (Days 1-2):     Foundation
+  - Create ml_core/ directory structure
+  - Create requirements.txt, config.yaml
+  - Synthetic telemetry & history generators
+
+Phase 2-4 (Days 3-5):   Modality Detectors
+  - Vision detector (pretrained or transfer learning)
+  - Telemetry detector (LSTM or statistical)
+  - History detector (Bayesian or logistic regression)
+
+Phase 5-8 (Days 6-9):   Core Research
+  - Quality estimation (independent from confidence)
+  - Trust gating (g_i = q_i × p_i)
+  - Fusion engine (trust-weighted combination)
+  - Calibration (temperature scaling + ECE/Brier)
+
+Phase 9-11 (Days 10-12): Experiments
+  - Human feedback (EMA prior updates)
+  - Degradation experiments (0%, 25%, 50%, 75%)
+  - Ablation study (8 variants)
+
+Phase 12-13 (Days 13-14): Integration & Polish
+  - Master pipeline (run_inference())
+  - Unit tests (50+)
+  - Integration tests (15+)
+  - Documentation
+
+================================================================================
+
+👥 PERSON 2: Application Developer (4-5 Days)
+
+Tasks:
+  1. Modify backend/main.py:
+     - Import: from ml_core.pipeline.inference import run_inference
+     - Call: result = run_inference(image, sensor_value, asset_id)
+     - Return: Full InferenceResult JSON
+
+  2. Enhance /predict route:
+     - Accept image file upload
+     - Convert to numpy array
+     - Pass to ML core
+     - Log to database
+
+  3. Update Frontend UI:
+     - Add image upload field
+     - Display all result fields:
+       * Final prediction
+       * Calibrated confidence
+       * Per-modality scores
+       * Trust weights
+       * Quality indicators
+       * Explanations
+
+  4. Integration Testing:
+     - Test end-to-end flow
+     - Verify JSON structure
+     - Check database logging
+
+================================================================================
+
+✅ SUCCESS = 7 SCENARIOS PASS
+
+1. ✓ Clean System        → All quality ~0.9, balanced weights
+2. ✓ Telemetry Noise     → Quality down, weight down
+3. ✓ Missing Modality    → Renormalized, no crash
+4. ✓ Contradiction       → Detected and handled
+5. ✓ Human Feedback      → Prior updated, weight changes
+6. ✓ Calibration         → ECE measured
+7. ✓ Degradation         → Trust-gated fusion > fixed averaging
+
+RULE: Every number from ACTUAL experiments. No fabrication.
+
+================================================================================
+
+🎯 CRITICAL PRINCIPLES
+
+DON'T: quality = model_confidence
+DO:    quality = input_properties (blur, noise, recency, etc.)
+
+DON'T: w_vision = 0.5 (hard-code)
+DO:    w_i = (q_i × p_i) / Σ(q_j × p_j) (data-driven)
+
+DON'T: Report "ECE improved" without measuring
+DO:    Report actual ECE or "NOT YET MEASURED"
+
+DON'T: Ignore missing modalities
+DO:    Renormalize weights over available modalities
+
+================================================================================
+
+📁 KEY FILES
+
+Documentation (Read First):
+  .claude-omniroute/projects/.../memory/START-HERE.md
+  .claude-omniroute/projects/.../memory/SYSTEM-COMPLETE-GUIDE.md
+  .claude-omniroute/projects/.../memory/ml-core-quick-ref.md
+
+Implementation:
+  industrial-platform/
+    ├── frontend/src/main.ts              (Person 2 updates)
+    ├── backend/main.py                   (Person 2 updates)
+    └── ml_core/pipeline/inference.py     (Person 1 builds)
+
+Plans & Progress:
+  industrial-platform/
+    ├── README.md                         (Research docs)
+    ├── STATUS.md                         (Progress)
+    └── plans/ml-core-implementation.md   (Timeline)
+
+================================================================================
+
+🎉 YOU'RE READY
+
+All documentation is complete.
+Architecture is proven.
+Interfaces are specified.
+Timeline is realistic.
+
+Start now. Refer to docs as needed.
+Every piece is documented.
+
+Questions? Check the relevant doc. Answer is there.
+
+================================================================================
+
+Generated: 2026-08-30
+Next Review: After Phase 1 complete
+
