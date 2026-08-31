@@ -1,0 +1,38 @@
+seed: 42
+modalities: [vision, telemetry, history]
+
+quality:
+  vision:
+    blur_ref: 100.0
+    exposure_range: [50, 200]
+    illumination_threshold: 30.0
+  telemetry:
+    missing_rate_penalty: linear
+    drift_penalty_scale: 1.0
+    staleness_half_life_s: 300
+    snr_threshold: 0.1
+  history:
+    recency_tau_days: 30
+    count_ref: 20
+
+trust:
+  epsilon: 1.0e-6
+  gate_fn: "multiplicative"
+  prior_bounds: [0.05, 0.99]
+  prior_init: 0.5
+
+feedback:
+  ema_alpha: 0.2
+  min_evidence_count: 5
+  confidence_threshold: 0.6
+  max_step: 0.15
+
+calibration:
+  method: temperature_scaling
+  fit_split: "val"
+  temperature_search_range: [0.1, 10.0]
+
+experiments:
+  dropout_levels: [0.0, 0.25, 0.5, 0.75]
+  n_trials: 5
+  degradation_modes: [noise, staleness, image_degradation, contradiction]
